@@ -7,9 +7,10 @@
 #include <cmath>
 #include <iostream>
 
-
+//movement system for updating entity position based on velocity and behavior
 class MovementSystem {
 public:
+    //updates positions baased on velocity
     void update(float deltaTime, ComponentManager<TransformComponent>& transforms,
                 ComponentManager<VelocityComponent>& velocities) {
         for (const auto& pair : velocities.getComponents()) {
@@ -22,7 +23,7 @@ public:
             }
         }
     }
-
+    //update flee behavior for entities with flee component
     void updateFlee(float deltaTime, ComponentManager<TransformComponent>& transforms,
                     ComponentManager<FleeComponent>& flees, const sf::Vector2f& playerPosition) {
         for (const auto& pair : flees.getComponents()) {
@@ -31,9 +32,11 @@ public:
             auto transform = transforms.getComponent(entity);
 
             if (transform) {
+                //calculate distance between player and entity
                 float distance = std::sqrt(std::pow(playerPosition.x - transform->position.x, 2) +
                                            std::pow(playerPosition.y - transform->position.y, 2));
                 if (distance < flee->fleeRadius) {
+                    //move entity away from player
                     sf::Vector2f direction = transform->position - playerPosition;
                     float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
                     if (length != 0) {
@@ -44,7 +47,7 @@ public:
             }
         }
     }
-
+    //update seeking behavior for entities with seek component
     void updateSeek(float deltaTime, ComponentManager<TransformComponent>& transforms,
                     ComponentManager<SeekComponent>& seekers, const sf::Vector2f& playerPosition) {
         for (const auto& pair : seekers.getComponents()) {
@@ -53,6 +56,7 @@ public:
             auto transform = transforms.getComponent(entity);
 
             if (transform) {
+                //move entity towards player
                 sf::Vector2f direction = playerPosition - transform->position;
                 float magnitude = std::sqrt(direction.x * direction.x + direction.y * direction.y);
                 if (magnitude != 0) {
@@ -63,7 +67,7 @@ public:
         }
     }
 };
-
+//bullet system for handling bullets, collisions, and enemy shooting
 class BulletSystem {
 public:
     void update(float deltaTime, ComponentManager<TransformComponent>& transforms,
@@ -104,7 +108,7 @@ public:
 
                 auto targetTransform = transforms.getComponent(target);
                 if (!targetTransform) continue;
-
+                //check if bullet collides
                 if (isColliding(*transform, *targetTransform)) {
                     bool shouldDamage = false;
 
@@ -211,7 +215,7 @@ public:
 private:
     std::vector<Entity> bulletsToRemove;
     std::vector<Entity> enemiesToRemove;
-
+    //checks if entities are colliding based on transform components
     bool isColliding(const TransformComponent& a, const TransformComponent& b) {
         return (a.position.x < b.position.x + b.size.x &&
                 a.position.x + a.size.x > b.position.x &&
@@ -219,7 +223,7 @@ private:
                 a.position.y + a.size.y > b.position.y);
     }
 };
-
+//handles player movement and shooting based on input
 class ControlsSystem {
 public:
     void handleInput(float deltaTime, const sf::RenderWindow& window, Entity player,
@@ -228,13 +232,14 @@ public:
                      ComponentManager<GraphicsComponent>& graphics,
                      ComponentManager<BulletComponent>& bullets,
                      EntityManager& entityManager) {
+        //player movement speed
         const float speed = 150.0f;
 
         auto velocity = velocities.getComponent(player);
         if (!velocity) return;
-
+        //reset velocity before getting inpiut
         velocity->velocity = {0, 0};
-
+        //check for wasd presses and update velocity accordingly
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
             velocity->velocity.y = -speed;
         }
@@ -252,22 +257,22 @@ public:
         if (shootCooldown > 0.0f) {
             shootCooldown -= deltaTime;
         }
-
+        //handles shooting with left mouse
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && shootCooldown <= 0.0f) {
             auto transform = transforms.getComponent(player);
             if (!transform) return;
-
+            //mouse position coordinates
             sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
             sf::Vector2f target = window.mapPixelToCoords(mousePosition);
-
+            //new bullet entity
             Entity bullet = entityManager.createEntity();
-
+            //calculated direction of bullet
             sf::Vector2f direction = target - transform->position;
             float magnitude = std::sqrt(direction.x * direction.x + direction.y * direction.y);
             if (magnitude != 0) {
                 direction /= magnitude;
             }
-
+            //add components to bullet
             transforms.addComponent(bullet, {transform->position, {10.0f, 10.0f}});
             
             sf::RectangleShape bulletShape({10.0f, 10.0f});
@@ -276,7 +281,7 @@ public:
             
             velocities.addComponent(bullet, {direction * 600.0f});
             bullets.addComponent(bullet, BulletComponent(true)); // Mark as player bullet
-
+            //set shoot cooldown
             shootCooldown = 0.5f;
         }
     }
@@ -284,14 +289,16 @@ public:
 
 class RenderSystem {
 public:
+    //renders all entities with transform component and graphics component
     void render(sf::RenderWindow& window, ComponentManager<TransformComponent>& transforms,
                 ComponentManager<GraphicsComponent>& graphics) {
         for (const auto& pair : graphics.getComponents()) {
             Entity entity = pair.first;
             auto graphic = pair.second;
-
+            //get entity transform component 
             auto transform = transforms.getComponent(entity);
             if (transform) {
+                //update drawable's position and render it
                 graphic->shape.setPosition(transform->position);
                 window.draw(graphic->shape);
             }
@@ -301,6 +308,7 @@ public:
 
 class MeleeSystem {
 public:
+    //update melee attacks for entities with melee component
     void update(float deltaTime, 
                 ComponentManager<TransformComponent>& transforms,
                 ComponentManager<MeleeComponent>& melees,
@@ -313,7 +321,7 @@ public:
                 EntityManager& entityManager,
                 const sf::Vector2f& playerPosition,
                 Entity player) {
-    
+        //get player transform and health
         auto playerTransform = transforms.getComponent(player);
         auto playerHealth = healths.getComponent(player);
         if (!playerTransform || !playerHealth || !graphics.getComponent(player)) return;
@@ -322,12 +330,12 @@ public:
             Entity entity = pair.first;
             auto melee = pair.second;
             auto transform = transforms.getComponent(entity);
-            
+            //check if enemy can be melee attacked
             bool isValidEnemy = (seekers.getComponent(entity) != nullptr || 
                                stateMachines.getComponent(entity) != nullptr);
             
             if (!transform || !isValidEnemy || !graphics.getComponent(entity)) continue;
-
+            //check collision between enemy and player
             bool isColliding = (transform->position.x < playerTransform->position.x + playerTransform->size.x &&
                               transform->position.x + transform->size.x > playerTransform->position.x &&
                               transform->position.y < playerTransform->position.y + playerTransform->size.y &&
@@ -335,7 +343,7 @@ public:
 
             if (isColliding) {
                 melee->currentCooldown -= deltaTime;
-                
+                //perform melee attack if cooldown over
                 if (melee->currentCooldown <= 0) {
                     playerHealth->health = 0;
                     melee->currentCooldown = melee->attackCooldown;
@@ -356,6 +364,7 @@ public:
 
 class StateMachineSystem {
 public:
+    //updates state based behavior for entities with state machine
     void update(float deltaTime,
                 ComponentManager<TransformComponent>& transforms,
                 ComponentManager<StateMachineComponent>& stateMachines,
@@ -367,12 +376,12 @@ public:
             auto transform = transforms.getComponent(entity);
             
             if (!transform) continue;
-
+            //calculate distance to player
             float distance = std::sqrt(
                 std::pow(playerPosition.x - transform->position.x, 2) +
                 std::pow(playerPosition.y - transform->position.y, 2)
             );
-
+            //handle state transition
             switch (stateMachine->currentState) {
                 case StateMachineComponent::Idle:
                     if (distance < stateMachine->triggerRadius) {
