@@ -66,3 +66,28 @@ Entity makeIdleSeekEnemy(EntityManager& entityManager,
 
     return enemy;
 }
+
+Entity makeBossEnemy(EntityManager& entityManager,
+                    ComponentManager<TransformComponent>& transforms,
+                    ComponentManager<GraphicsComponent>& graphics,
+                    ComponentManager<HealthComponent>& healths,
+                    ComponentManager<ShootingComponent>& shootings) {
+    Entity enemy = entityManager.createEntity();
+
+    // Make boss much larger (200x200) and position near top center
+    transforms.addComponent(enemy, { {860, 100}, {200, 200} });
+
+	// When creating the boss
+	shootings.addComponent(enemy, { 2.0f, 0.0f }); // Shoots every 2 seconds
+
+    sf::RectangleShape shape({200, 200});
+    shape.setFillColor(sf::Color::Magenta); // Different color to distinguish boss
+    graphics.addComponent(enemy, { shape });
+
+    healths.addComponent(enemy, { 20 }); // Much more health than regular enemies
+
+    // Shoots more frequently than regular enemies
+    shootings.addComponent(enemy, { 0.5f, 0.0f }); // Shoots every 0.5 seconds
+
+    return enemy;
+}

@@ -37,7 +37,9 @@ int main() {
     Entity aggressiveEnemy = makeAggressiveEnemy(entityManager, transformManager, graphicsManager,
                                            healthManager, seekManager, meleeManager);
 	Entity idleSeekEnemy = makeIdleSeekEnemy(entityManager, transformManager, graphicsManager,
-                                        healthManager, stateMachineManager, meleeManager);									   
+                                        healthManager, stateMachineManager, meleeManager);	
+    Entity bossEnemy = makeBossEnemy(entityManager, transformManager, graphicsManager,
+                                healthManager, shootingManager);																	   
 
     sf::Clock clock;
     while (Renderer::getWindow().isOpen()) {
@@ -67,6 +69,8 @@ int main() {
     
     meleeSystem.update(deltaTime, transformManager, meleeManager, healthManager,
                    seekManager, stateMachineManager, graphicsManager,
+                   bulletManager, velocityManager,  // Add these
+                   entityManager,
                    transformManager.getComponent(player)->position, player);
 
     stateMachineSystem.update(deltaTime, transformManager, stateMachineManager,

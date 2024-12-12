@@ -74,8 +74,8 @@ public:
                 ComponentManager<FleeComponent>& flees,
                 ComponentManager<BulletComponent>& bullets,
                 ComponentManager<SeekComponent>& seekers,
-				ComponentManager<StateMachineComponent>& stateMachines,
-				ComponentManager<MeleeComponent>& melees,
+                ComponentManager<StateMachineComponent>& stateMachines,
+                ComponentManager<MeleeComponent>& melees,
                 EntityManager& entityManager,
                 const sf::Vector2f& playerPosition) {
         // Update existing bullets
@@ -120,10 +120,14 @@ public:
     if (health) {
         health->health -= 1;
         if (health->health <= 0) {
-            if (shootings.getComponent(target) == nullptr) {  
-                
+            if (shootings.getComponent(target) == nullptr) {  // If target is player
+                entityManager.destroyEntity(target);  // Completely destroy player
+                // Remove all components
+                transforms.removeComponent(target);
+                healths.removeComponent(target);
+                velocities.removeComponent(target);
                 graphics.removeComponent(target);
-            } else {  
+            } else {  // If target is an enemy
                 enemiesToRemove.push_back(target);
             }
         }
@@ -150,7 +154,10 @@ public:
                         std::pow(playerPosition.x - transform->position.x, 2) +
                         std::pow(playerPosition.y - transform->position.y, 2));
 
-                    if (distance < 600.0f) {
+                    // Different range for boss
+                    float shootRange = transform->size.x > 100 ? 1000.0f : 600.0f;
+
+                    if (distance < shootRange) {
                         sf::Vector2f direction = playerPosition - transform->position;
                         float magnitude = std::sqrt(direction.x * direction.x + direction.y * direction.y);
                         if (magnitude != 0) {
@@ -158,14 +165,20 @@ public:
                         }
 
                         Entity bullet = entityManager.createEntity();
-                        transforms.addComponent(bullet, {transform->position, {10.0f, 10.0f}});
                         
-                        sf::RectangleShape bulletShape({10.0f, 10.0f});
-                        bulletShape.setFillColor(sf::Color::Yellow);
+                        // Check if this is boss by size
+                        bool isBoss = transform->size.x > 100;
+                        float bulletSize = isBoss ? 30.0f : 10.0f;
+                        float bulletSpeed = isBoss ? 100.0f : 400.0f;
+                        
+                        transforms.addComponent(bullet, {transform->position, {bulletSize, bulletSize}});
+                        
+                        sf::RectangleShape bulletShape({bulletSize, bulletSize});
+                        bulletShape.setFillColor(isBoss ? sf::Color::Red : sf::Color::Yellow);
                         graphics.addComponent(bullet, {bulletShape});
                         
-                        velocities.addComponent(bullet, {direction * 400.0f});
-                        bullets.addComponent(bullet, BulletComponent(false)); // Mark as enemy bullet
+                        velocities.addComponent(bullet, {direction * bulletSpeed});
+                        bullets.addComponent(bullet, BulletComponent(false));
                     }
                 }
             }
@@ -182,16 +195,16 @@ public:
         bulletsToRemove.clear();
 
         for (Entity enemy : enemiesToRemove) {
-    entityManager.destroyEntity(enemy);
-    transforms.removeComponent(enemy);
-    healths.removeComponent(enemy);
-    graphics.removeComponent(enemy);
-    shootings.removeComponent(enemy);
-    flees.removeComponent(enemy);
-    seekers.removeComponent(enemy);     
-    melees.removeComponent(enemy);      
-    stateMachines.removeComponent(enemy); 
-}
+            entityManager.destroyEntity(enemy);
+            transforms.removeComponent(enemy);
+            healths.removeComponent(enemy);
+            graphics.removeComponent(enemy);
+            shootings.removeComponent(enemy);
+            flees.removeComponent(enemy);
+            seekers.removeComponent(enemy);     
+            melees.removeComponent(enemy);      
+            stateMachines.removeComponent(enemy); 
+        }
         enemiesToRemove.clear();
     }
 
@@ -295,25 +308,25 @@ public:
                 ComponentManager<SeekComponent>& seekers,
                 ComponentManager<StateMachineComponent>& stateMachines,
                 ComponentManager<GraphicsComponent>& graphics,
+                ComponentManager<BulletComponent>& bullets,      // Add this
+                ComponentManager<VelocityComponent>& velocities, // Add this
+                EntityManager& entityManager,
                 const sf::Vector2f& playerPosition,
                 Entity player) {
     
         auto playerTransform = transforms.getComponent(player);
         auto playerHealth = healths.getComponent(player);
-        if (!playerTransform || !playerHealth) return;
-
-        std::cout << "DEBUG: Current player health: " << playerHealth->health << std::endl;
+        if (!playerTransform || !playerHealth || !graphics.getComponent(player)) return;
 
         for (const auto& pair : melees.getComponents()) {
             Entity entity = pair.first;
             auto melee = pair.second;
             auto transform = transforms.getComponent(entity);
             
-            // Check if this is either a red enemy (with SeekComponent) or yellow enemy (with StateMachineComponent)
             bool isValidEnemy = (seekers.getComponent(entity) != nullptr || 
                                stateMachines.getComponent(entity) != nullptr);
             
-            if (!transform || !isValidEnemy) continue;
+            if (!transform || !isValidEnemy || !graphics.getComponent(entity)) continue;
 
             bool isColliding = (transform->position.x < playerTransform->position.x + playerTransform->size.x &&
                               transform->position.x + transform->size.x > playerTransform->position.x &&
@@ -321,16 +334,19 @@ public:
                               transform->position.y + transform->size.y > playerTransform->position.y);
 
             if (isColliding) {
-                std::cout << "DEBUG: Collision detected with entity: " << entity << std::endl;
                 melee->currentCooldown -= deltaTime;
                 
                 if (melee->currentCooldown <= 0) {
                     playerHealth->health = 0;
                     melee->currentCooldown = melee->attackCooldown;
-                    std::cout << "DEBUG: Player killed by melee attack" << std::endl;
                     
-                    // Remove player graphics on death
+                    // Fully destroy player and all components
+                    bullets.removeComponent(player);
+                    transforms.removeComponent(player);
+                    healths.removeComponent(player);
+                    velocities.removeComponent(player);
                     graphics.removeComponent(player);
+                    entityManager.destroyEntity(player);
                 }
             }
         }
