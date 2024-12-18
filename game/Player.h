@@ -4,7 +4,7 @@
 #include "Components.h"
 
 //creates player entity with specific components
-Entity makePlayer(EntityManager& entityManager,
+inline Entity makePlayer(EntityManager& entityManager,
                  ComponentManager<TransformComponent>& transforms,
                  ComponentManager<GraphicsComponent>& graphics,
                  ComponentManager<VelocityComponent>& velocities,

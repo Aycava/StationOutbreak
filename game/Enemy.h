@@ -1,9 +1,10 @@
+#pragma once
 #include "EntityManager.h"
 #include "ComponentManager.h"
 #include "Components.h"
 #include <SFML/Graphics.hpp>
 //creates ranged enemy with fleeing and shooting behavior
-Entity makeRangedEnemy(EntityManager& entityManager,
+inline Entity makeRangedEnemy(EntityManager& entityManager,
                        ComponentManager<TransformComponent>& transforms,
                        ComponentManager<GraphicsComponent>& graphics,
                        ComponentManager<HealthComponent>& healths,
@@ -26,7 +27,7 @@ Entity makeRangedEnemy(EntityManager& entityManager,
     return enemy;
 }
 //creates aggressive enemy with seeking and melee attack behavior
-Entity makeAggressiveEnemy(EntityManager& entityManager,
+inline Entity makeAggressiveEnemy(EntityManager& entityManager,
                           ComponentManager<TransformComponent>& transforms,
                           ComponentManager<GraphicsComponent>& graphics,
                           ComponentManager<HealthComponent>& healths,
@@ -49,7 +50,7 @@ Entity makeAggressiveEnemy(EntityManager& entityManager,
     return enemy;
 }
 //makes idle seek enemy with state machine and melee attack behavior
-Entity makeIdleSeekEnemy(EntityManager& entityManager,
+inline Entity makeIdleSeekEnemy(EntityManager& entityManager,
                          ComponentManager<TransformComponent>& transforms,
                          ComponentManager<GraphicsComponent>& graphics,
                          ComponentManager<HealthComponent>& healths,
@@ -72,7 +73,7 @@ Entity makeIdleSeekEnemy(EntityManager& entityManager,
     return enemy;
 }
 //creates boss enemy with high health and frequent shooting
-Entity makeBossEnemy(EntityManager& entityManager,
+inline Entity makeBossEnemy(EntityManager& entityManager,
                     ComponentManager<TransformComponent>& transforms,
                     ComponentManager<GraphicsComponent>& graphics,
                     ComponentManager<HealthComponent>& healths,
