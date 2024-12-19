@@ -1,7 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include "LevelOneScene.h"
 #include "ComponentManager.h"
-
+//instantiating our component managers and systems 
 ComponentManager<TransformComponent> transformManager;
 ComponentManager<GraphicsComponent> graphicsManager;
 ComponentManager<VelocityComponent> velocityManager;
@@ -19,20 +19,12 @@ MovementSystem movementSystem;
 BulletSystem bulletSystem;
 MeleeSystem meleeSystem;
 StateMachineSystem stateMachineSystem;
-
+//creates player and enemies
 void LevelOneScene::load() {
-	if (!font.loadFromFile("assets/fonts/arial.ttf")) {
-		throw std::runtime_error("Failed to load Arial font");
-	}
-	enemiesRemaining.setFont(font);
-	enemiesRemaining.setString("12/12");
-	enemiesRemaining.setCharacterSize(20);
-	enemiesRemaining.setPosition(10, 10);
-	enemiesRemaining.setFillColor(sf::Color::White);
 	player = makePlayer(_ents, transformManager, graphicsManager, velocityManager, healthManager);
 	spawnEnemies(12);
 }
-
+//spawns enemies in groups of 3, using random numbers to ensure they do not spawn stacked on top of each other
 void LevelOneScene::spawnEnemies(int count) {
 	for (int i = 0; i < count/3; i++) {
 		float x = 100 + (rand() % 800);
@@ -56,32 +48,39 @@ void LevelOneScene::spawnEnemies(int count) {
 		}
 	}
 }
-
+//spawns boss and sets our bossSpawned bool to true
 void LevelOneScene::spawnBoss() {
 	makeBossEnemy(_ents, transformManager, graphicsManager, healthManager, shootingManager);
 	bossSpawned = true;
 }
 
 void LevelOneScene::update(double deltaTime) {
+	//handles player input
 	controlsSystem.handleInput(deltaTime, Renderer::getWindow(), player, velocityManager, transformManager,
 		graphicsManager, bulletManager, _ents);
-
+	//updates various systems to do with entity activity
 	movementSystem.update(deltaTime, transformManager, velocityManager);
 	movementSystem.updateSeek(deltaTime, transformManager, seekManager, transformManager.getComponent(player)->position);
 	movementSystem.updateFlee(deltaTime, transformManager, fleeManager, transformManager.getComponent(player)->position);
 	bulletSystem.update(deltaTime, transformManager, velocityManager, healthManager, graphicsManager,
 		shootingManager, fleeManager, bulletManager, seekManager, stateMachineManager,
 		meleeManager, _ents, transformManager.getComponent(player)->position);
-
+	//check if player is dead, if so closes window
+	auto playerHealth = healthManager.getComponent(player);
+	if (playerHealth && playerHealth->health <= 0) {
+		Renderer::getWindow().close();
+		return;
+	}
+	//update enemy count
 	remainingEnemies = _ents.size() - 1;
+	//checks if enemies are dead and if boss has been spawned, if not spawned then spawns boss, if spawned then closes window
 	if (remainingEnemies <= 0 && !bossSpawned) {
 		spawnBoss();
+	} else if (remainingEnemies <= 0 && bossSpawned) {
+		Renderer::getWindow().close();
 	}
-
-	enemiesRemaining.setString(std::to_string(remainingEnemies) + "/12");
 }
-
+//renders entity related stuff
 void LevelOneScene::render() {
 	renderSystem.render(Renderer::getWindow(), transformManager, graphicsManager);
-	Renderer::getWindow().draw(enemiesRemaining);
 }

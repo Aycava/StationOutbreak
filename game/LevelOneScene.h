@@ -1,10 +1,11 @@
+//LevelOneScene.h
 #pragma once
 #include "Scene.h"
 #include "Systems.h"
 #include "Renderer.h"
 #include "Player.h"
 #include "Enemy.h"
-
+//sets up our level one scene, further defined in LevelOneScene.cpp
 class LevelOneScene : public Scene {
 public:
 	LevelOneScene() = default;
@@ -14,9 +15,9 @@ public:
 private:
 	void spawnEnemies(int count);
 	void spawnBoss();
-	sf::Text enemiesRemaining;
+	//to keep track of enemies left in scene
 	int remainingEnemies;
+	//to mark whether or not boss has been spawned
 	bool bossSpawned = false;
-	sf::Font font;
 	Entity player;
 };

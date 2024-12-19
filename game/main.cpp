@@ -7,7 +7,7 @@
 
 std::map<std::string, std::shared_ptr<Scene>> scenes;
 std::shared_ptr<Scene> activeScene;
-
+//function for loading scenes
 void loadScenes() {
 	scenes["LevelOne"] = std::make_shared<LevelOneScene>();
 
@@ -19,12 +19,13 @@ void loadScenes() {
 }
 
 int main() {
+	//create window
 	sf::RenderWindow window(sf::VideoMode(1920, 1080), "StationOutbreak");
 	Renderer::initialise(window);
-
+	//load scenes
 	loadScenes();
 	activeScene = scenes["LevelOne"];
-
+	//main game loop
 	sf::Clock clock;
 	bool isRunning = true;
 
@@ -38,13 +39,13 @@ int main() {
 				window.close();
 			}
 		}
-
+		//update active scene
 		if (activeScene) {
 			activeScene->update(deltaTime);
 		}
 
 		window.clear();
-
+		//render active scene
 		if (activeScene) {
 			activeScene->render();
 		}

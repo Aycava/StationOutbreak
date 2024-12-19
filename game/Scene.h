@@ -1,8 +1,8 @@
-//scene.h
+//Scene.h
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "EntityManager.h"
-
+//sets up our base definition of a scene
 class Scene {
 public:
 	Scene() = default;
@@ -13,5 +13,6 @@ public:
 	virtual void load() = 0;
 
 protected:
+	//each scene should have its own entity manager
 	EntityManager _ents;
 };

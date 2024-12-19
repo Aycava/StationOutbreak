@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include <queue>
-
+//this mainly handles rendering of non entity objects
 using namespace std;
 using namespace sf;
 //global queue to hold drawable objects
