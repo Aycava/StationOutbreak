@@ -15,9 +15,8 @@ private:
 	void spawnEnemies(int count);
 	void spawnBoss();
 	sf::Text enemiesRemaining;
-
-	int remainingEnemies = 40;
+	int remainingEnemies;
 	bool bossSpawned = false;
-
+	sf::Font font;
 	Entity player;
 };

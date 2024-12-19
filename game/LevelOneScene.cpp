@@ -21,6 +21,10 @@ MeleeSystem meleeSystem;
 StateMachineSystem stateMachineSystem;
 
 void LevelOneScene::load() {
+	if (!font.loadFromFile("assets/fonts/arial.ttf")) {
+		throw std::runtime_error("Failed to load Arial font");
+	}
+	enemiesRemaining.setFont(font);
 	enemiesRemaining.setString("12/12");
 	enemiesRemaining.setCharacterSize(20);
 	enemiesRemaining.setPosition(10, 10);
@@ -78,6 +82,6 @@ void LevelOneScene::update(double deltaTime) {
 }
 
 void LevelOneScene::render() {
-	Renderer::addDrawable(&enemiesRemaining);
 	renderSystem.render(Renderer::getWindow(), transformManager, graphicsManager);
+	Renderer::getWindow().draw(enemiesRemaining);
 }

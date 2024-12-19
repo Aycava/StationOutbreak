@@ -120,25 +120,25 @@ public:
                     }
 
                     if (shouldDamage) {
-    auto health = healths.getComponent(target);
-    if (health) {
-        health->health -= 1;
-        if (health->health <= 0) {
-            if (shootings.getComponent(target) == nullptr) {  // If target is player
-                entityManager.destroyEntity(target);  // Completely destroy player
-                // Remove all components
-                transforms.removeComponent(target);
-                healths.removeComponent(target);
-                velocities.removeComponent(target);
-                graphics.removeComponent(target);
-            } else {  // If target is an enemy
-                enemiesToRemove.push_back(target);
-            }
-        }
-    }
-    bulletsToRemove.push_back(bullet);
-    break;
-}
+                        auto health = healths.getComponent(target);
+                        if (health) {
+                            health->health -= 1;
+                            if (health->health <= 0) {
+                                if (shootings.getComponent(target) == nullptr) {  // If target is player
+                                    entityManager.destroyEntity(target);  // Completely destroy player
+                                    // Remove all components
+                                    transforms.removeComponent(target);
+                                    healths.removeComponent(target);
+                                    velocities.removeComponent(target);
+                                    graphics.removeComponent(target);
+                                } else {  // If target is an enemy
+                                    enemiesToRemove.push_back(target);
+                                }
+                            }
+                        }
+                        bulletsToRemove.push_back(bullet);
+                        break;
+                    }
                 }
             }
         }
